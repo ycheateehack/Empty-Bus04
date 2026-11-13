@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty-Bus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+[hidden] { display: none !important; }
+body { background-color: #6f10ad; min-height: 100dvh; }
+:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+.app-container { width: 100%; max-width: 430px; min-height: 100dvh; margin: 0 auto; position: relative; }
+.main-screen { background-color: #9900FF; color: #FFFFFF; padding: 20px 16px 32px; }
+
+/* topo */
+.app-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+.user-info h1 { font-size: 1.4rem; line-height: 1.2; }
+.user-info p { font-size: .8rem; opacity: .95; margin-top: 2px; }
+.user-avatar {
+    width: 48px; height: 48px; flex: none; border: 0; border-radius: 50%;
+    background: #FFFFFF; color: #1b1630; font-size: 1.15rem;
+    display: grid; place-items: center; cursor: pointer;
+}
+.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.topbar h1 { font-size: 1.4rem; line-height: 1.2; }
+.back { color: #FFFFFF; font-size: 1.2rem; padding: 4px; text-decoration: none; }
+
+/* busca */
+.search-box {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    background: #E2D1F9; color: #6b5f80; border-radius: 12px; padding: 0 14px;
+}
+.search-box input { flex: 1; min-width: 0; border: 0; background: none; outline: none; padding: 13px 0; font-size: .9rem; color: #1b1630; }
+.search-box input::placeholder { color: #6b5f80; }
+.search-box:focus-within { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* atalhos */
+.actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 26px; }
+.action-card { background: #FFFFFF; color: #1b1630; border-radius: 12px; padding: 16px 14px; text-decoration: none; display: grid; gap: 2px; }
+.action-card > i { font-size: 1.6rem; color: #0052CC; margin-bottom: 14px; }
+.action-card h3 { font-size: .9rem; }
+.action-card p { font-size: .7rem; color: #4a4458; }
+
+/* filtros */
+.chips { display: flex; gap: 10px; margin-bottom: 16px; }
+.chip { border: 0; border-radius: 999px; padding: 7px 18px; font-size: .8rem; font-weight: 600; background: #FFFFFF; color: #1b1630; cursor: pointer; }
+.chip[aria-pressed="true"] { background: #1f4fe0; color: #FFFFFF; }
+
+/* lista */
+.section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.section-header h2 { font-size: 1.05rem; }
+.see-all { color: #5cf1ff; font-size: .85rem; text-decoration: none; }
+.bus-list { display: grid; gap: 14px; }
+.bus-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; border-radius: 12px; padding: 14px; cursor: pointer; }
+.bus-item.dark { background: rgba(255, 255, 255, .2); padding-block: 22px; }
+.bus-item.light { background: #eaf3f1; color: #1b1630; }
+.bus-number { min-width: 52px; text-align: center; padding: 9px 6px; border-radius: 8px; color: #FFFFFF; font-weight: 700; font-size: 1.05rem; }
+.badge-201 { background-color: #0052CC; }
+.badge-307 { background-color: #2E7D32; }
+.badge-412 { background-color: #311B92; }
+.bus-details { display: grid; gap: 2px; font-size: .75rem; }
+.bus-details h4 { font-size: .85rem; }
+.bus-side { display: grid; justify-items: end; gap: 8px; }
+.bus-time { font-weight: 700; font-size: 1.1rem; white-space: nowrap; }
+.bus-row { display: flex; align-items: center; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 10px; font-size: .7rem; font-weight: 600; }
+.pill.full  { background: #ffb3b3; color: #a4191a; }
+.pill.mid   { background: #fde0a8; color: #8a4f00; }
+.pill.empty { background: #bff0d0; color: #17683a; }
+.fav { border: 0; background: none; color: #8a6d00; font-size: 1rem; cursor: pointer; padding: 2px; }
+.light :focus-visible { outline-color: #1b1630; }
+.bus-empty { text-align: center; padding: 28px 8px; opacity: .9; }
+
+/* banner */
+.footer-banner {
+    display: flex; align-items: center; gap: 14px; margin-top: 26px;
+    background: #FFFFFF; color: #1b1630; border-radius: 12px; padding: 16px; text-decoration: none;
+}
+.footer-banner > i { font-size: 1.8rem; color: #0052CC; }
+.footer-banner strong { display: block; font-size: .9rem; }
+.footer-banner small { font-size: .7rem; color: #4a4458; }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body { background-color: #6f10ad; min-height: 100dvh; }
+
+.app-container {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-screen {
+    background-color: #9900FF;
+    padding: 35px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.auth-header {
+    text-align: center;
+    color: #FFFFFF;
+    margin-bottom: 22px;
+}
+.auth-logo {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 12px;
+    background: #FFFFFF;
+    color: #9900FF;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+}
+.auth-header h1 { font-size: 24px; }
+.auth-header p { font-size: 14px; opacity: 0.9; margin-top: 4px; }
+
+.auth-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 18px 20px 22px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+    display: flex;
+    background: #F0E8FB;
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+.tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #5900B3;
+    cursor: pointer;
+}
+.tab.active { background: #9900FF; color: #FFFFFF; }
+
+.auth-message {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    background: #E6F7EC;
+    color: #1B6B35;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-form[hidden], .auth-message[hidden] { display: none; }
+
+.field label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="password"] {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: #E2D1F9;
+    font-size: 15px;
+    outline: none;
+    color: #222;
+}
+.field input:focus { border-color: #9900FF; }
+.field.invalid input { border-color: #D93025; }
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.toggle-pass {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    color: #5900B3;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.error { color: #D93025; font-size: 12px; display: block; min-height: 0; margin-top: 4px; }
+.error:empty { display: none; }
+.form-error { text-align: center; margin: 0; font-size: 13px; }
+
+.remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+    cursor: pointer;
+}
+
+.submit-btn {
+    height: 48px;
+    border: none;
+    border-radius: 16px;
+    background: #9900FF;
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 4px;
+}
+.submit-btn:hover { background: #8000D6; }
+.submit-btn:disabled { opacity: 0.6; cursor: wait; }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body { background-color: #6f10ad; min-height: 100dvh; }
+
+.app-container {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+.map-view {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+}
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #E5E3DF;
+    background-image: radial-gradient(#D3D1CD 2px, transparent 2px);
+    background-size: 24px 24px;
+}
+.floating-search-bar {
+    position: absolute;
+    top: 30px;
+    left: 16px;
+    right: 16px;
+    height: 54px;
+    background-color: #B246FF; 
+    border-radius: 27px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+.floating-search-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: #FFFFFF;
+    font-size: 15px;
+    padding: 0 12px;
+}
+.floating-search-bar input::placeholder { color: rgba(255, 255, 255, 0.75); }
+
+.back-btn, .clear-btn {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    font-size: 18px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.floating-controls {
+    position: absolute;
+    top: 105px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+}
+.control-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: none;
+    color: #444444;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+
+.bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #9900FF;
+    border-top-left-radius: 35px;
+    border-top-right-radius: 35px;
+    padding: 12px 24px 30px 24px;
+    z-index: 10;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.drag-handle {
+    width: 45px;
+    height: 5px;
+    background-color: rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
+    margin: 0 auto 20px auto;
+}
+
+.bottom-actions-grid { display: flex; gap: 16px; }
+.sheet-button {
+    flex: 1;
+    height: 48px;
+    background-color: #E2D1F9; 
+    border: none;
+    border-radius: 16px;
+    color: #5900B3;
+    font-size: 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.sheet-button.active { background-color: #FFFFFF; }
+.map-screen { height: 100dvh; }
+
+
+/* ===== Tela da linha (#linha): detalhe + reportar lotação ===== */
+.bd-screen { background: #9900FF; color: #FFFFFF; padding: 28px 22px 22px; display: flex; flex-direction: column; }
+.bd-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.bd-top-left { display: flex; align-items: center; gap: 10px; }
+.bd-top h1 { font-size: 22px; font-weight: 700; }
+.bd-back { width: 44px; height: 44px; margin-left: -10px; color: #FFFFFF; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.bd-fav { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #FFFFFF; color: #3b0a78; font-size: 1.05rem; display: grid; place-items: center; cursor: pointer; }
+.bd-fav[aria-pressed="true"] { color: #d99a00; }
+
+.bd-card { margin-top: 22px; background: #f1f4f6; color: #14141a; border-radius: 14px; padding: 18px 16px; display: flex; align-items: flex-start; gap: 14px; }
+.bd-badge { min-width: 56px; height: 48px; padding: 0 6px; border-radius: 10px; color: #FFFFFF; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.bd-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.bd-name { font-size: 17px; font-weight: 700; }
+.bd-dir { font-size: 13px; color: #4a4a57; }
+.bd-chip { margin-top: 8px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; border-radius: 14px; padding: 5px 12px; }
+.bd-chip.full  { background: #ffd9d6; color: #a3191b; }
+.bd-chip.mid   { background: #fff1c2; color: #6b4a00; }
+.bd-chip.empty { background: #d7f7e3; color: #0f6b35; }
+.bd-eta { display: flex; align-items: center; gap: 6px; padding-top: 4px; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.bd-eta i { font-size: .75rem; }
+
+.bd-title { margin: 28px 0 0; font-size: 18px; font-weight: 700; }
+.bd-meter { margin-top: 12px; display: flex; gap: 8px; }
+.bd-meter span { flex: 1; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .28); }
+.bd-meter.full span:not(.off)  { background: #ff6b6b; }
+.bd-meter.mid span:not(.off)   { background: #ffc83d; }
+.bd-meter.empty span:not(.off) { background: #3ddc84; }
+.bd-note { margin: 12px 0 0; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+.bd-report { margin-top: 20px; background: rgba(255, 255, 255, .14); border-radius: 14px; padding: 14px 16px; }
+.bd-report h2 { font-size: 14px; font-weight: 700; }
+.bd-report p { margin: 2px 0 0; font-size: 12px; opacity: .9; }
+.bd-options { margin-top: 12px; display: flex; gap: 8px; }
+.bd-rbtn { flex: 1; min-height: 58px; border: 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+.bd-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.bd-dot { width: 10px; height: 10px; border-radius: 50%; }
+.bd-count { font-size: 12px; font-weight: 500; }
+.bd-rbtn.empty { background: #d7f7e3; color: #0f5a2e; }
+.bd-rbtn.empty .bd-dot { background: #1fa855; }
+.bd-rbtn.mid { background: #fff1c2; color: #6b4a00; }
+.bd-rbtn.mid .bd-dot { background: #e5a400; }
+.bd-rbtn.full { background: #ffd9d6; color: #8f1417; }
+.bd-rbtn.full .bd-dot { background: #d92d30; }
+.bd-rbtn[aria-pressed="true"] { box-shadow: 0 0 0 3px #FFFFFF; }
+.bd-total { margin-top: 10px; font-size: 12px; opacity: .9; }
+.bd-thanks { margin-top: 6px; font-size: 12px; font-weight: 600; }
+
+.bd-route-title { margin: 28px 0 0; font-size: 14px; font-weight: 700; }
+.bd-route { margin: 16px 0 0; padding: 0; list-style: none; flex: 1; position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
+.bd-route::before { content: ""; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 3px; background: #b9a4ff; }
+.bd-stop { position: relative; display: flex; align-items: center; gap: 16px; font-size: 14px; }
+.bd-stop.end { font-weight: 700; }
+.bd-pin { width: 28px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center; }
+.bd-pin::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; border: 3px solid #2b3bff; }
+.bd-stop.end .bd-pin::after { width: 28px; height: 28px; border-width: 5px; }
+.bd-tag { background: #6a2bd8; font-size: 12px; font-weight: 500; border-radius: 12px; padding: 4px 12px; }
+.bd-map { margin-top: 18px; height: 52px; border-radius: 12px; background: #1f3bff; color: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+
+/* ===== Botões do topo da Home (configurações e perfil) ===== */
+.header-actions { display: flex; gap: 10px; flex: none; }
+.user-avatar { text-decoration: none; }
+
+/* ===== Configurações e Perfil (#config, #perfil) ===== */
+.cf { --sheet: #fff; --row: #f5f2fa; --ink: #1b1630; --muted: #6b5f80; --sec: #4b1286; --lav: #E2D1F9; --lavtxt: #5900B3; --icon: #7a1fd1; --head: #9900FF; --hdink: #1b0b33;
+      background: var(--head); display: flex; flex-direction: column; }
+[data-tema="escuro"] .cf { --sheet: #1c1626; --row: #2a2236; --ink: #f3ecff; --muted: #b9aed0; --sec: #d7b6ff; --lav: #3a2a52; --lavtxt: #e2d1f9; --icon: #c58bff; --head: #5b0f99; --hdink: #ffffff; }
+.cf button { font: inherit; border: 0; cursor: pointer; }
+.cf svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.cf-hd { position: relative; flex: none; height: 84px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.cf-hd::before { content: ""; position: absolute; left: -40px; top: -40px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.25); }
+.cf-hd::after { content: ""; position: absolute; right: 0; top: 0; width: 100px; height: 100%; background: rgba(255,255,255,.25); clip-path: polygon(60% 0, 100% 0, 100% 100%, 0 100%); }
+.cf-hd h2 { position: relative; z-index: 1; font-size: 1.15rem; color: var(--hdink); }
+.cf-hb { position: absolute; z-index: 2; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--lav); color: var(--lavtxt); text-decoration: none; }
+.cf-hb.l { left: 14px; }
+.cf-hb.r { right: 14px; background: none; color: var(--hdink); }
+
+.cf-sheet { flex: 1; padding: 16px 14px 28px; border-radius: 26px 26px 0 0; background: var(--sheet); color: var(--ink); }
+.cf-s { margin: 16px 0 7px; font-size: .95rem; color: var(--sec); }
+.cf-sheet > .cf-s:first-child, #perfil-view > .cf-s:first-child, .cf-form > .cf-s:first-child { margin-top: 0; }
+.cf-grp { display: grid; gap: 4px; }
+
+.cf-row { display: flex; align-items: center; gap: 11px; width: 100%; padding: 9px 11px; border-radius: 10px; text-align: left; background: var(--row); color: var(--ink); text-decoration: none; }
+.cf-ic { width: 22px; display: grid; place-items: center; color: var(--icon); }
+.cf-tx { flex: 1; display: grid; min-width: 0; }
+.cf-tx b { font-size: .78rem; }
+.cf-tx small { font-size: .68rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-row > svg { width: 15px; height: 15px; }
+
+.cf-sw { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 46px; height: 26px; margin: 0; border-radius: 13px; background: #cfc3e0; cursor: pointer; }
+.cf-sw::before { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.cf-sw:checked { background: #9900FF; }
+.cf-sw:checked::before { transform: translateX(20px); }
+
+.cf-wide { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 42px; margin-top: 16px; border-radius: 12px; background: var(--lav); color: var(--lavtxt); font-weight: 700; font-size: .82rem; text-decoration: none; }
+.cf-wide.ghost { background: var(--row); color: var(--ink); }
+.cf-wide.solid { background: #9900FF; color: #fff; }
+
+.cf-who { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.cf-who h4 { font-size: 1.2rem; overflow-wrap: anywhere; }
+.cf-who p { margin-top: 2px; font-size: .74rem; color: var(--muted); overflow-wrap: anywhere; }
+.cf-av { position: relative; flex: none; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; background: var(--lav); color: var(--icon); }
+.cf-av > svg { width: 50px; height: 50px; fill: currentColor; stroke: none; }
+.cf-av > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.cf-cam { position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border: 3px solid var(--sheet); border-radius: 50%; display: grid; place-items: center; background: #4b1286; color: #fff; }
+.cf-cam svg { width: 14px; height: 14px; }
+
+.cf-form { display: grid; gap: 12px; }
+.cf-field label { display: block; margin-bottom: 5px; font-size: .78rem; font-weight: 700; color: var(--ink); }
+.cf-field input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid transparent; background: var(--row); color: var(--ink); font-size: .9rem; outline: none; }
+.cf-field input:focus { border-color: #9900FF; }
+.cf-field input:disabled { opacity: .65; }
+.cf-err { display: block; min-height: 0; color: #D93025; font-size: .75rem; }
+.cf-err:empty { display: none; }
+[data-tema="escuro"] .cf-err { color: #ff8a80; }
+.cf-actions { display: flex; gap: 10px; }
+.cf-actions .cf-wide { margin-top: 4px; }
+.cf :focus-visible { outline-color: #9900FF; }
+[data-tema="escuro"] .cf :focus-visible { outline-color: #fff; }
+.cf-hd :focus-visible { outline-color: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- Tela: login e cadastro (#login) -->
+    <main id="screen-login" class="app-container auth-screen" hidden>
+        <header class="auth-header">
+            <div class="auth-logo"><i class="fa-solid fa-bus"></i></div>
+            <h1>Empty-Bus</h1>
+            <p>Acompanhe suas linhas em tempo real</p>
+        </header>
+
+        <div class="auth-card">
+            <div class="tabs" role="tablist">
+                <button type="button" class="tab active" role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Entrar</button>
+                <button type="button" class="tab" role="tab" id="tab-register" aria-selected="false" aria-controls="form-register">Cadastrar</button>
+            </div>
+
+            <p id="auth-message" class="auth-message" role="status" aria-live="polite" hidden></p>
+
+            <!-- LOGIN -->
+            <form id="form-login" class="auth-form" role="tabpanel" aria-labelledby="tab-login" novalidate>
+                <div class="field">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" name="email" autocomplete="email" placeholder="voce@email.com" required>
+                    <small class="error" data-error-for="email"></small>
+                </div>
+
+                <div class="field">
+                    <label for="login-password">Senha</label>
+                    <div class="password-wrap">
+                        <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="Sua senha" required>
+                        <button type="button" class="toggle-pass" aria-label="Mostrar senha"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                    <small class="error" data-error-for="password"></small>
+                </div>
+
+                <label class="remember">
+                    <input type="checkbox" name="remember"> Manter conectado
+                </label>
+
+                <small class="error form-error" data-error-for="form"></small>
+                <button type="submit" class="submit-btn">Entrar</button>
+            </form>
+
+            <!-- CADASTRO -->
+            <form id="form-register" class="auth-form" role="tabpanel" aria-labelledby="tab-register" novalidate hidden>
+                <div class="field">
+                    <label for="reg-name">Nome</label>
+                    <input type="text" id="reg-name" name="name" autocomplete="name" placeholder="Seu nome" required>
+                    <small class="error" data-error-for="name"></small>
+                </div>
+
+                <div class="field">
+                    <label for="reg-email">E-mail</label>
+                    <input type="email" id="reg-email" name="email" autocomplete="email" placeholder="voce@email.com" required>
+                    <small class="error" data-error-for="email"></small>
+                </div>
+
+                <div class="field">
+                    <label for="reg-password">Senha</label>
+                    <div class="password-wrap">
+                        <input type="password" id="reg-password" name="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres, letras e números" required>
+                        <button type="button" class="toggle-pass" aria-label="Mostrar senha"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                    <small class="error" data-error-for="password"></small>
+                </div>
+
+                <div class="field">
+                    <label for="reg-confirm">Confirmar senha</label>
+                    <input type="password" id="reg-confirm" name="confirm" autocomplete="new-password" placeholder="Repita a senha" required>
+                    <small class="error" data-error-for="confirm"></small>
+                </div>
+
+                <small class="error form-error" data-error-for="form"></small>
+                <button type="submit" class="submit-btn">Criar conta</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Telas: próximos ônibus (#inicio) e linhas de ônibus (#linhas) -->
+    <div id="screen-app" class="app-container main-screen" hidden>
+
+        <!-- Tela: Próximos ônibus -->
+        <section id="view-home">
+            <header class="app-header">
+                <div class="user-info">
+                    <h1>Olá, usuário!</h1>
+                    <p>Para onde você quer ir hoje?</p>
+                </div>
+                <div class="header-actions">
+                    <a href="#config" class="user-avatar" title="Configurações" aria-label="Configurações"><i class="fa-solid fa-gear"></i></a>
+                    <a href="#perfil" class="user-avatar" title="Perfil" aria-label="Perfil"><i class="fa-solid fa-user"></i></a>
+                </div>
+            </header>
+
+            <label class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="q-home" placeholder="Buscar endereço, linha de ônibus..." aria-label="Buscar endereço ou linha de ônibus">
+            </label>
+
+            <div class="actions-grid">
+                <a href="#mapa" class="action-card">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <h3>Buscar no mapa</h3>
+                    <p>Encontre pontos próximos</p>
+                </a>
+                <a href="#linhas" class="action-card">
+                    <i class="fa-solid fa-bus"></i>
+                    <h3>Linhas de ônibus</h3>
+                    <p>Veja horários e itinerários</p>
+                </a>
+            </div>
+
+            <section class="bus-section">
+                <div class="section-header">
+                    <h2>Próximos ônibus</h2>
+                    <a href="#linhas" class="see-all">Ver todos</a>
+                </div>
+                <div class="bus-list" id="list-home" aria-live="polite"></div>
+            </section>
+
+            <a href="#mapa" class="footer-banner">
+                <i class="fa-solid fa-bus-simple"></i>
+                <span>
+                    <strong>Planeje sua viagem</strong>
+                    <small>Veja rotas, horários e quanto tempo vai levar</small>
+                </span>
+            </a>
+        </section>
+
+        <!-- Tela: Linhas de ônibus -->
+        <section id="view-lines" hidden>
+            <header class="topbar">
+                <a href="#inicio" class="back" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></a>
+                <h1>Linhas de ônibus</h1>
+            </header>
+
+            <label class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="q-lines" placeholder="Buscar linhas, destinos ou região..." aria-label="Buscar linhas, destinos ou região">
+            </label>
+
+            <div class="chips" id="chips">
+                <button type="button" class="chip" data-f="all" aria-pressed="true">Todas</button>
+                <button type="button" class="chip" data-f="near" aria-pressed="false">Mais próximos</button>
+                <button type="button" class="chip" data-f="fav" aria-pressed="false">Favoritos</button>
+            </div>
+
+            <div class="bus-list" id="list-lines" aria-live="polite"></div>
+        </section>
+
+    </div>
+
+    <!-- Ícones (sprite) das telas de configurações e perfil -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l2 2H4z"/><path d="M10 20a2 2 0 004 0"/></symbol>
+  <symbol id="pal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="11" r="1"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 0c0 2-2.5 2-2.5 4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="out" viewBox="0 0 24 24"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="cam" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+</svg>
+
+    <!-- Tela: Configurações (#config) -->
+    <main id="screen-config" class="app-container cf" hidden>
+        <header class="cf-hd">
+            <a class="cf-hb l" href="#inicio" aria-label="Voltar"><svg aria-hidden="true"><use href="#back"/></svg></a>
+            <h2>Configurações</h2>
+        </header>
+        <section class="cf-sheet">
+            <h3 class="cf-s">Conta</h3>
+            <div class="cf-grp">
+                <a class="cf-row" href="#perfil"><span class="cf-ic"><svg aria-hidden="true"><use href="#user"/></svg></span><span class="cf-tx"><b>Perfil</b><small>Veja e edite suas informações</small></span><svg aria-hidden="true"><use href="#chev"/></svg></a>
+                <button class="cf-row" type="button" data-toast="Privacidade: em breve"><span class="cf-ic"><svg aria-hidden="true"><use href="#lock"/></svg></span><span class="cf-tx"><b>Privacidade</b><small>Gerencie seus dados</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                <button class="cf-row" type="button" data-toast="Notificações: em breve"><span class="cf-ic"><svg aria-hidden="true"><use href="#bell"/></svg></span><span class="cf-tx"><b>Notificações</b><small>Escolha o que receber</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+            </div>
+
+            <h3 class="cf-s">Aplicativo</h3>
+            <div class="cf-grp">
+                <label class="cf-row"><span class="cf-ic"><svg aria-hidden="true"><use href="#pal"/></svg></span><span class="cf-tx"><b>Modo escuro</b><small>Altere o tema do app</small></span><input type="checkbox" class="cf-sw" id="cf-dark"></label>
+                <button class="cf-row" type="button" data-toast="Por enquanto o app está disponível apenas em Português (BR)"><span class="cf-ic"><svg aria-hidden="true"><use href="#globe"/></svg></span><span class="cf-tx"><b>Idioma</b><small>Português (BR)</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                <label class="cf-row"><span class="cf-ic"><svg aria-hidden="true"><use href="#pin"/></svg></span><span class="cf-tx"><b>Localização</b><small>Permita o acesso ao seu local</small></span><input type="checkbox" class="cf-sw" id="cf-loc" checked></label>
+            </div>
+
+            <h3 class="cf-s">Suporte</h3>
+            <div class="cf-grp">
+                <button class="cf-row" type="button" data-toast="Ajuda: em breve"><span class="cf-ic"><svg aria-hidden="true"><use href="#help"/></svg></span><span class="cf-tx"><b>Ajuda</b><small>Tire suas dúvidas</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                <button class="cf-row" type="button" data-toast="Fale conosco: em breve"><span class="cf-ic"><svg aria-hidden="true"><use href="#chat"/></svg></span><span class="cf-tx"><b>Fale conosco</b><small>Envie sua mensagem</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                <button class="cf-row" type="button" data-toast="Empty-Bus - versão 1.0.0"><span class="cf-ic"><svg aria-hidden="true"><use href="#info"/></svg></span><span class="cf-tx"><b>Sobre o app</b><small>Versão 1.0.0</small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+            </div>
+
+            <button type="button" class="cf-wide" id="logout-btn"><svg aria-hidden="true"><use href="#out"/></svg> Sair da conta</button>
+        </section>
+    </main>
+
+    <!-- Tela: Perfil (#perfil) -->
+    <main id="screen-perfil" class="app-container cf" hidden>
+        <header class="cf-hd">
+            <a class="cf-hb l" id="perfil-back" href="#config" aria-label="Voltar"><svg aria-hidden="true"><use href="#back"/></svg></a>
+            <h2>Perfil</h2>
+            <button type="button" class="cf-hb r" id="perfil-bell" aria-label="Notificações"><svg aria-hidden="true"><use href="#bell"/></svg></button>
+        </header>
+        <section class="cf-sheet">
+            <div class="cf-who">
+                <div class="cf-av">
+                    <svg id="perfil-icon" aria-hidden="true"><use href="#user"/></svg>
+                    <img id="perfil-img" alt="Foto do perfil" hidden>
+                    <button type="button" class="cf-cam" id="perfil-foto" aria-label="Alterar foto"><svg aria-hidden="true"><use href="#cam"/></svg></button>
+                    <input type="file" id="perfil-file" accept="image/*" hidden>
+                </div>
+                <div>
+                    <h4 id="perfil-nome"></h4>
+                    <p id="perfil-email"></p>
+                </div>
+            </div>
+
+            <div id="perfil-view">
+                <h3 class="cf-s">Minhas informações</h3>
+                <div class="cf-grp">
+                    <button class="cf-row" type="button" data-edit="name"><span class="cf-ic"><svg aria-hidden="true"><use href="#user"/></svg></span><span class="cf-tx"><b>Nome</b><small id="pv-name"></small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                    <button class="cf-row" type="button" data-toast="O e-mail da conta não pode ser alterado por aqui"><span class="cf-ic"><svg aria-hidden="true"><use href="#mail"/></svg></span><span class="cf-tx"><b>E-mail</b><small id="pv-email"></small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                    <button class="cf-row" type="button" data-edit="phone"><span class="cf-ic"><svg aria-hidden="true"><use href="#phone"/></svg></span><span class="cf-tx"><b>Telefone</b><small id="pv-phone"></small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                </div>
+
+                <h3 class="cf-s">Preferências</h3>
+                <div class="cf-grp">
+                    <a class="cf-row" href="#linhas?filtro=fav"><span class="cf-ic"><svg aria-hidden="true"><use href="#star"/></svg></span><span class="cf-tx"><b>Linhas favoritas</b><small>Gerencie suas linhas preferidas</small></span><svg aria-hidden="true"><use href="#chev"/></svg></a>
+                    <button class="cf-row" type="button" data-edit="address"><span class="cf-ic"><svg aria-hidden="true"><use href="#pin"/></svg></span><span class="cf-tx"><b>Endereço padrão</b><small id="pv-address"></small></span><svg aria-hidden="true"><use href="#chev"/></svg></button>
+                </div>
+
+                <button type="button" class="cf-wide" id="perfil-edit"><svg aria-hidden="true"><use href="#edit"/></svg> Editar perfil</button>
+            </div>
+
+            <form id="perfil-form" class="cf-form" novalidate hidden>
+                <h3 class="cf-s">Editar perfil</h3>
+                <div class="cf-field"><label for="pf-name">Nome</label><input id="pf-name" type="text" autocomplete="name" maxlength="60"></div>
+                <div class="cf-field"><label for="pf-email">E-mail</label><input id="pf-email" type="email" disabled></div>
+                <div class="cf-field"><label for="pf-phone">Telefone</label><input id="pf-phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(81) 91234-5678" maxlength="20"></div>
+                <div class="cf-field"><label for="pf-address">Endereço padrão</label><input id="pf-address" type="text" autocomplete="street-address" placeholder="Rua, número, bairro" maxlength="120"></div>
+                <small class="cf-err" id="pf-err" role="alert"></small>
+                <div class="cf-actions">
+                    <button type="button" class="cf-wide ghost" id="pf-cancel">Cancelar</button>
+                    <button type="submit" class="cf-wide solid">Salvar</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Tela: detalhe da linha / reportar lotação (#linha?linha=201) - montada por JS -->
+    <main id="screen-bus" class="app-container bd-screen" hidden></main>
+
+    <!-- Tela: mapa (#mapa) -->
+    <div id="screen-map" class="app-container map-screen" hidden>
+        <div class="map-view">
+            <div class="map-placeholder"></div>
+            <div class="floating-search-bar">
+                <a href="#inicio" class="back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <input type="text" placeholder="Buscar endereço, linha de ônibus...">
+                <button class="clear-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="floating-controls">
+                <button class="control-btn"><i class="fa-solid fa-location-crosshairs"></i></button>
+                <button class="control-btn"><i class="fa-solid fa-layer-group"></i></button>
+            </div>
+        </div>
+        <div class="bottom-sheet">
+            <div class="drag-handle"></div>
+            <div class="bottom-actions-grid">
+                <button class="sheet-button">
+                    <i class="fa-regular fa-star"></i> favoritos
+                </button>
+                <button class="sheet-button">
+                    <i class="fa-solid fa-bus"></i> Paradas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+'use strict';
+
+/**
+ * Empty-Bus - autenticação (cadastro, login, sessão)
+ *
+ * ATENÇÃO: esta é uma implementação 100% no navegador (localStorage), útil para
+ * protótipo/demonstração. Não existe segurança real sem um servidor: quando houver
+ * backend, troque register()/login() por chamadas fetch() à sua API.
+ * As senhas nunca são guardadas em texto puro (PBKDF2 + salt aleatório).
+ */
+const Auth = (() => {
+  const USERS_KEY = 'painel:usuarios';
+  const SESSION_KEY = 'painel:sessao';
+  const LOGIN_PAGE = '#login';
+  const HOME_PAGE = '#inicio';
+
+  // ---------- Armazenamento seguro (try/catch) ----------
+  const read = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const write = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // ---------- Utilitários ----------
+  const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  const toHex = (buf) =>
+    [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const fromHex = (hex) =>
+    new Uint8Array(hex.match(/.{2}/g).map((h) => parseInt(h, 16)));
+
+  async function hashPassword(password, saltHex) {
+    const salt = saltHex
+      ? fromHex(saltHex)
+      : crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      key,
+      256
+    );
+    return { hash: toHex(bits), salt: toHex(salt) };
+  }
+
+  // ---------- Validação ----------
+  function validateRegistration({ name, email, password, confirm }) {
+    const errors = {};
+    if (!String(name || '').trim() || String(name).trim().length < 2)
+      errors.name = 'Informe seu nome (mínimo 2 letras).';
+    if (!EMAIL_RE.test(normalizeEmail(email))) errors.email = 'Informe um e-mail válido.';
+    if (!password || password.length < 8)
+      errors.password = 'A senha deve ter pelo menos 8 caracteres.';
+    else if (!/[A-Za-z]/.test(password) || !/\d/.test(password))
+      errors.password = 'Use letras e números na senha.';
+    if (password !== confirm) errors.confirm = 'As senhas não coincidem.';
+    return errors;
+  }
+
+  // ---------- Operações ----------
+  async function register({ name, email, password, confirm }) {
+    const errors = validateRegistration({ name, email, password, confirm });
+    if (Object.keys(errors).length) return { ok: false, errors };
+
+    const users = read(USERS_KEY, []);
+    const mail = normalizeEmail(email);
+    if (users.some((u) => u.email === mail))
+      return { ok: false, errors: { email: 'Este e-mail já está cadastrado.' } };
+
+    const { hash, salt } = await hashPassword(password);
+    users.push({
+      id: crypto.randomUUID(),
+      name: String(name).trim(),
+      email: mail,
+      hash,
+      salt,
+      createdAt: Date.now(),
+    });
+    if (!write(USERS_KEY, users))
+      return { ok: false, errors: { form: 'Não foi possível salvar o cadastro neste navegador.' } };
+
+    return { ok: true };
+  }
+
+  async function login({ email, password, remember }) {
+    const mail = normalizeEmail(email);
+    if (!EMAIL_RE.test(mail) || !password)
+      return { ok: false, errors: { form: 'Informe e-mail e senha.' } };
+
+    const user = read(USERS_KEY, []).find((u) => u.email === mail);
+    // Mesma mensagem para e-mail inexistente ou senha errada (não revela qual existe)
+    const invalid = { ok: false, errors: { form: 'E-mail ou senha incorretos.' } };
+    if (!user) {
+      await hashPassword(password); // equaliza o tempo de resposta
+      return invalid;
+    }
+    const { hash } = await hashPassword(password, user.salt);
+    if (hash !== user.hash) return invalid;
+
+    const session = { id: user.id, name: user.name, email: user.email, at: Date.now() };
+    // "Lembrar de mim" -> localStorage; caso contrário -> sessionStorage
+    try {
+      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {
+      return { ok: false, errors: { form: 'Não foi possível iniciar a sessão neste navegador.' } };
+    }
+    return { ok: true, user: session };
+  }
+
+  function currentUser() {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function logout() {
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
+    } catch {
+      /* ignora */
+    }
+    window.location.replace(LOGIN_PAGE);
+  }
+
+  /** Chame nas páginas privadas: redireciona para o login se não houver sessão. */
+  function requireLogin() {
+    const user = currentUser();
+    if (!user) {
+      window.location.replace(LOGIN_PAGE);
+      return null;
+    }
+    return user;
+  }
+
+  /** Chame na página de login: se já estiver logado, vai para a home. */
+  function redirectIfLoggedIn() {
+    if (currentUser()) window.location.replace(HOME_PAGE);
+  }
+
+  /** Atualiza o nome do usuário logado (cadastro + sessão). */
+  function updateName(name) {
+    const clean = String(name || '').trim();
+    if (clean.length < 2) return { ok: false, error: 'Informe seu nome (mínimo 2 letras).' };
+    const user = currentUser();
+    if (!user) return { ok: false, error: 'Sessão expirada. Entre novamente.' };
+
+    const users = read(USERS_KEY, []);
+    const record = users.find((u) => u.id === user.id);
+    if (record) {
+      record.name = clean;
+      if (!write(USERS_KEY, users)) return { ok: false, error: 'Não foi possível salvar neste navegador.' };
+    }
+    try {
+      const store = sessionStorage.getItem(SESSION_KEY) ? sessionStorage : localStorage;
+      store.setItem(SESSION_KEY, JSON.stringify({ ...user, name: clean }));
+    } catch {
+      return { ok: false, error: 'Não foi possível atualizar a sessão.' };
+    }
+    return { ok: true };
+  }
+
+  return { register, login, logout, currentUser, requireLogin, redirectIfLoggedIn, updateName, HOME_PAGE };
+})();
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+'use strict';
+
+/** Empty-Bus - tela de login/cadastro */
+(() => {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const tabLogin = $('#tab-login');
+  const tabRegister = $('#tab-register');
+  const formLogin = $('#form-login');
+  const formRegister = $('#form-register');
+  const message = $('#auth-message');
+
+  // ---------- Abas ----------
+  function showTab(which) {
+    const isLogin = which === 'login';
+    tabLogin.classList.toggle('active', isLogin);
+    tabRegister.classList.toggle('active', !isLogin);
+    tabLogin.setAttribute('aria-selected', String(isLogin));
+    tabRegister.setAttribute('aria-selected', String(!isLogin));
+    formLogin.hidden = !isLogin;
+    formRegister.hidden = isLogin;
+    clearErrors(formLogin);
+    clearErrors(formRegister);
+    if (isLogin === false) message.hidden = true;
+  }
+  tabLogin.addEventListener('click', () => showTab('login'));
+  tabRegister.addEventListener('click', () => showTab('register'));
+
+  // ---------- Erros ----------
+  function clearErrors(form) {
+    form.querySelectorAll('[data-error-for]').forEach((n) => (n.textContent = ''));
+    form.querySelectorAll('.field').forEach((f) => f.classList.remove('invalid'));
+  }
+
+  function showErrors(form, errors = {}) {
+    clearErrors(form);
+    Object.entries(errors).forEach(([field, text]) => {
+      const target = form.querySelector(`[data-error-for="${field}"]`);
+      if (target) target.textContent = text;
+      const input = form.querySelector(`[name="${field}"]`);
+      if (input) input.closest('.field')?.classList.add('invalid');
+    });
+    const first = form.querySelector('.field.invalid input');
+    if (first) first.focus();
+  }
+
+  // ---------- Mostrar/ocultar senha ----------
+  document.querySelectorAll('.toggle-pass').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement.querySelector('input');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+      btn.firstElementChild.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+    });
+  });
+
+  // ---------- Envio ----------
+  async function withLoading(form, fn) {
+    const btn = $('.submit-btn', form);
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Aguarde...';
+    try {
+      await fn();
+    } catch (err) {
+      console.error(err);
+      showErrors(form, { form: 'Ocorreu um erro inesperado. Tente novamente.' });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+
+  formLogin.addEventListener('submit', (e) => {
+    e.preventDefault();
+    withLoading(formLogin, async () => {
+      const data = new FormData(formLogin);
+      const result = await Auth.login({
+        email: data.get('email'),
+        password: data.get('password'),
+        remember: data.get('remember') === 'on',
+      });
+      if (!result.ok) return showErrors(formLogin, result.errors);
+      formLogin.reset();
+      window.location.replace(Auth.HOME_PAGE);
+    });
+  });
+
+  formRegister.addEventListener('submit', (e) => {
+    e.preventDefault();
+    withLoading(formRegister, async () => {
+      const data = new FormData(formRegister);
+      const result = await Auth.register({
+        name: data.get('name'),
+        email: data.get('email'),
+        password: data.get('password'),
+        confirm: data.get('confirm'),
+      });
+      if (!result.ok) return showErrors(formRegister, result.errors);
+
+      const email = data.get('email');
+      formRegister.reset();
+      showTab('login');
+      $('#login-email').value = String(email).trim();
+      message.textContent = 'Conta criada com sucesso! Entre com seu e-mail e senha.';
+      message.hidden = false;
+      $('#login-password').focus();
+    });
+  });
+
+  // Se o navegador não suportar Web Crypto (ex.: página aberta fora de HTTPS/localhost)
+  if (!window.crypto || !crypto.subtle || !crypto.randomUUID) {
+    message.textContent =
+      'Este navegador/contexto não suporta criptografia. Abra a página via localhost ou HTTPS.';
+    message.style.background = '#FDECEA';
+    message.style.color = '#B3261E';
+    message.hidden = false;
+  }
+})();
+
+    </script>
+    <script>
+'use strict';
+
+/**
+ * Empty-Bus - telas "Próximos ônibus" (#) e "Linhas de ônibus" (#linhas)
+ *  - Saudação conforme o horário e nome do usuário logado
+ *  - Cards com tempo, lotação (Cheio/Moderado/Vazio) e relatos
+ *  - Busca com debounce; Enter na tela inicial leva ao mapa
+ *  - Filtros Todas / Mais próximos / Favoritos (linhas favoritas ficam no navegador)
+ *  - Contagem regressiva simulada
+ *
+ * Quando houver API real, basta substituir BUSES por um fetch().
+ */
+(() => {
+  // ---------- Dados (mock) ----------
+  // counts = relatos de lotação dos últimos 15 min (mock); stop = id da parada no mapa; via = paradas do itinerário (entre início e Centro)
+  const BUSES = [
+    { line: '201', name: 'Terminal Central', direction: 'Centro', minutes: 3,  stop: 'terminal-central',  counts: { empty: 1,  mid: 4,  full: 22 }, via: ['Av. Brasil', 'Praça da Liberdade', 'Hospital Municipal'] },
+    { line: '307', name: 'Joana Bezerra',    direction: 'Centro', minutes: 7,  stop: 'ti-joana-bezerra', counts: { empty: 19, mid: 3,  full: 0 },  via: ['Rua das Acácias', 'Escola Estadual', 'Mercado Público'] },
+    { line: '412', name: 'Boa Vista',        direction: 'Centro', minutes: 12, stop: 'boa-vista',        counts: { empty: 3,  mid: 12, full: 4 },  via: ['Rua da Aurora', 'Ponte Princesa Isabel', 'Praça da República'] },
+    { line: '518', name: 'Derby',            direction: 'Centro', minutes: 18, stop: 'derby',            counts: { empty: 2,  mid: 9,  full: 3 },  via: ['Av. Conde da Boa Vista', 'Praça Maciel Pinheiro', 'Mercado de São José'], color: '#8e44ad' },
+    { line: '623', name: 'Boa Viagem',       direction: 'Centro', minutes: 25, stop: 'boa-viagem',       counts: { empty: 8,  mid: 2,  full: 0 },  via: ['Av. Domingos Ferreira', 'Pina', 'Ponte Paulo Guerra'], color: '#16a085' },
+  ];
+  const HOME_COUNT = 3;
+  const NEAR_MINUTES = 10;
+  const TICK_MS = 60_000;
+  const FAV_KEY = 'painel:linhas-favoritas';
+  const STATUS_CLASS = { Cheio: 'full', Moderado: 'mid', Vazio: 'empty' };
+
+  // ---------- Utilitários ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const normalize = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const debounce = (fn, delay = 200) => {
+    let t;
+    return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); };
+  };
+  const el = (tag, className, text) => {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+  const favorites = (() => {
+    try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch { return new Set(); }
+  })();
+  const saveFavorites = () => {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch { /* segue sem persistir */ }
+  };
+
+  // ---------- Relatos de lotação (o voto do usuário fica no navegador) ----------
+  const VOTES_KEY = 'painel:relatos';
+  const votes = (() => {
+    try { return JSON.parse(localStorage.getItem(VOTES_KEY)) || {}; } catch { return {}; }
+  })();
+  const saveVotes = () => {
+    try { localStorage.setItem(VOTES_KEY, JSON.stringify(votes)); } catch { /* segue sem persistir */ }
+  };
+  const countsFor = (bus) => {
+    const c = { ...bus.counts };
+    if (votes[bus.line] in c) c[votes[bus.line]] += 1;
+    return c;
+  };
+  const statusFor = (c) => (c.full >= c.mid && c.full >= c.empty ? 'Cheio' : c.mid >= c.empty ? 'Moderado' : 'Vazio');
+  function refreshBus(bus) {
+    const c = countsFor(bus);
+    bus.status = statusFor(c);
+    bus.reports = c.empty + c.mid + c.full;
+  }
+
+  // ---------- Estado e elementos ----------
+  const state = { buses: BUSES.map((b) => ({ ...b })), qHome: '', qLines: '', filter: 'all' };
+  state.buses.forEach(refreshBus);
+  const viewHome = $('#view-home');
+  const viewLines = $('#view-lines');
+  const listHome = $('#list-home');
+  const listLines = $('#list-lines');
+  const matches = (b, q) => {
+    const n = normalize(q);
+    return !n || [b.line, b.name, b.direction].some((v) => normalize(v).includes(n));
+  };
+  const formatTime = (min) => (min <= 0 ? 'Chegando ›' : `${min} min ›`);
+
+  // ---------- Saudação ----------
+  function renderGreeting() {
+    const h = new Date().getHours();
+    const greet = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    const user = Auth.currentUser();
+    const first = user && user.name ? user.name.split(' ')[0] : 'usuário';
+    $('.user-info h1').textContent = `${greet}, ${first}!`;
+  }
+
+  // ---------- Cards ----------
+  function buildItem(bus, theme) {
+    const item = el('div', `bus-item ${theme}`);
+    item.tabIndex = 0;
+    item.setAttribute('role', 'link');
+    item.setAttribute('aria-label', `Linha ${bus.line}, ${bus.name}, ${formatTime(bus.minutes)}, ${bus.status}`);
+
+    const badge = el('div', `bus-number badge-${bus.line}`, bus.line);
+    if (bus.color) badge.style.background = bus.color;
+
+    const details = el('div', 'bus-details');
+    details.append(el('strong', '', bus.name), el('span', '', `Direção: ${bus.direction}`));
+    if (theme === 'dark') details.append(el('span', '', `Relatos: ${bus.reports}`));
+
+    const time = el('div', 'bus-time', formatTime(bus.minutes));
+    time.dataset.line = bus.line;
+
+    const pill = el('span', `pill ${STATUS_CLASS[bus.status]}`);
+    pill.append(el('i', 'fa-solid fa-bus'), ` ${bus.status}`);
+
+    const top = el('div', 'bus-row');
+    if (theme === 'light') top.append(buildFav(bus));
+    top.append(time);
+
+    const side = el('div', 'bus-side');
+    side.append(top, pill);
+    item.append(badge, details, side);
+
+    const go = () => { window.location.href = `#linha?linha=${encodeURIComponent(bus.line)}`; };
+    item.addEventListener('click', go);
+    item.addEventListener('keydown', (e) => {
+      if (e.target === item && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); }
+    });
+    return item;
+  }
+
+  function buildFav(bus) {
+    const btn = el('button', 'fav');
+    btn.type = 'button';
+    const paint = () => {
+      const on = favorites.has(bus.line);
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', on ? `Remover linha ${bus.line} dos favoritos` : `Favoritar linha ${bus.line}`);
+      btn.replaceChildren(el('i', `${on ? 'fa-solid' : 'fa-regular'} fa-star`));
+    };
+    paint();
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      favorites.has(bus.line) ? favorites.delete(bus.line) : favorites.add(bus.line);
+      saveFavorites();
+      state.filter === 'fav' ? renderLines() : paint();
+    });
+    return btn;
+  }
+
+  // ---------- Listas ----------
+  function fill(list, items, theme, emptyText) {
+    list.replaceChildren();
+    if (!items.length) return list.append(el('p', 'bus-empty', emptyText));
+    items.forEach((b) => list.append(buildItem(b, theme)));
+  }
+
+  function renderHome() {
+    const searching = state.qHome.trim() !== '';
+    const found = state.buses.filter((b) => matches(b, state.qHome));
+    fill(listHome, searching ? found : found.slice(0, HOME_COUNT), 'dark',
+      'Nenhuma linha encontrada. Pressione Enter para buscar no mapa.');
+  }
+
+  function renderLines() {
+    let items = state.buses.filter((b) => matches(b, state.qLines));
+    if (state.filter === 'near') items = items.filter((b) => b.minutes <= NEAR_MINUTES);
+    if (state.filter === 'fav') items = items.filter((b) => favorites.has(b.line));
+    fill(listLines, items, 'light',
+      state.filter === 'fav' ? 'Você ainda não tem linhas favoritas.' : 'Nenhuma linha encontrada.');
+  }
+
+  function tick() {
+    state.buses.forEach((b) => {
+      b.minutes -= 1;
+      if (b.minutes < 0) b.minutes = 15 + Math.floor(Math.random() * 15);
+    });
+    state.buses.forEach((b) => {
+      document.querySelectorAll(`.bus-time[data-line="${b.line}"]`).forEach((t) => (t.textContent = formatTime(b.minutes)));
+      document.querySelectorAll(`.bd-eta-time[data-line="${b.line}"]`).forEach((t) => (t.textContent = formatEta(b.minutes)));
+    });
+  }
+
+  // ---------- Tela da linha (#linha?linha=201) ----------
+  const viewBus = $('#screen-bus');
+  const NOTES = { full: 'Ainda há espaço para ficar em pé', mid: 'Há assentos e espaço em pé', empty: 'Há muitos assentos disponíveis' };
+  const LEVEL = { full: 4, mid: 3, empty: 1 };
+  const REPORT_OPTIONS = [['empty', 'Vazio'], ['mid', 'Moderado'], ['full', 'Cheio']];
+  const formatEta = (min) => (min <= 0 ? 'Chegando' : `${min} min`);
+  const people = (n) => `${n} ${n === 1 ? 'pessoa' : 'pessoas'}`;
+
+  // lembra se o usuário veio de #inicio ou #linhas, para o botão Voltar
+  let cameFrom = '#linhas';
+  window.addEventListener('hashchange', (e) => {
+    const old = e.oldURL.includes('#') ? '#' + e.oldURL.split('#')[1].split('?')[0] : '';
+    if (old === '#inicio' || old === '#linhas') cameFrom = old;
+  });
+
+  function renderBus(bus, focusSelector) {
+    const c = countsFor(bus);
+    const total = c.empty + c.mid + c.full;
+    const cls = STATUS_CLASS[bus.status];
+    const mine = votes[bus.line];
+    const isFav = favorites.has(bus.line);
+    const stops = [bus.name, ...bus.via, 'Centro'];
+    const badgeStyle = bus.color ? ` style="background:${bus.color}"` : '';
+
+    viewBus.innerHTML = `
+      <header class="bd-top">
+        <div class="bd-top-left">
+          <a class="bd-back" href="${cameFrom}" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></a>
+          <h1>Linha ${bus.line}</h1>
+        </div>
+        <button type="button" class="bd-fav" id="bd-fav" aria-pressed="${isFav}" aria-label="${isFav ? 'Remover dos favoritos' : 'Favoritar linha'}">
+          <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-star"></i>
+        </button>
+      </header>
+
+      <section class="bd-card">
+        <div class="bd-badge badge-${bus.line}"${badgeStyle}>${bus.line}</div>
+        <div class="bd-info">
+          <span class="bd-name">${bus.name}</span>
+          <span class="bd-dir">Direção: ${bus.direction}</span>
+          <span class="bd-chip ${cls}"><i class="fa-solid fa-user-group"></i> ${bus.status}</span>
+        </div>
+        <div class="bd-eta"><span class="bd-eta-time" data-line="${bus.line}">${formatEta(bus.minutes)}</span><i class="fa-solid fa-chevron-right"></i></div>
+      </section>
+
+      <h2 class="bd-title">Ocupação de ônibus</h2>
+      <div class="bd-meter ${cls}" role="img" aria-label="Ocupação: ${LEVEL[cls]} de 5 níveis">
+        ${[0, 1, 2, 3, 4].map((i) => `<span class="${i < LEVEL[cls] ? '' : 'off'}"></span>`).join('')}
+      </div>
+      <p class="bd-note"><i class="fa-solid fa-user"></i> ${NOTES[cls]}</p>
+
+      <section class="bd-report" aria-labelledby="bd-rep-title">
+        <h2 id="bd-rep-title">Reportar lotação</h2>
+        <p>Ajude outros passageiros: como está o ônibus agora?</p>
+        <div class="bd-options">
+          ${REPORT_OPTIONS.map(([key, label]) => `
+            <button type="button" class="bd-rbtn ${key}" data-key="${key}" aria-pressed="${mine === key}">
+              <span class="bd-label"><span class="bd-dot"></span>${label}</span>
+              <span class="bd-count">${people(c[key])}</span>
+            </button>`).join('')}
+        </div>
+        <div class="bd-total">${total} ${total === 1 ? 'pessoa reportou' : 'pessoas reportaram'} nos últimos 15 min</div>
+        ${mine ? '<p class="bd-thanks" role="status">Obrigado por ajudar! Toque de novo no mesmo botão para desfazer.</p>' : ''}
+      </section>
+
+      <h2 class="bd-route-title">Itinerário</h2>
+      <ol class="bd-route">
+        ${stops.map((name, i) => {
+          const end = i === 0 || i === stops.length - 1;
+          const tag = i === 0 ? '<span class="bd-tag">Início</span>' : i === stops.length - 1 ? '<span class="bd-tag">Fim</span>' : '';
+          return `<li class="bd-stop${end ? ' end' : ''}"><span class="bd-pin"></span>${name}${tag}</li>`;
+        }).join('')}
+      </ol>
+
+      <a class="bd-map" href="#mapa?parada=${encodeURIComponent(bus.stop)}&linha=${encodeURIComponent(bus.line)}">
+        <i class="fa-solid fa-map"></i> Ver no mapa
+      </a>`;
+
+    $('#bd-fav', viewBus).addEventListener('click', () => {
+      favorites.has(bus.line) ? favorites.delete(bus.line) : favorites.add(bus.line);
+      saveFavorites();
+      renderLines();
+      renderBus(bus, '#bd-fav');
+    });
+
+    viewBus.querySelectorAll('.bd-rbtn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        if (votes[bus.line] === key) delete votes[bus.line];
+        else votes[bus.line] = key;
+        saveVotes();
+        refreshBus(bus);
+        renderHome();
+        renderLines();
+        renderBus(bus, `.bd-rbtn[data-key="${key}"]`);
+      });
+    });
+
+    if (focusSelector) viewBus.querySelector(focusSelector)?.focus();
+  }
+
+  window.addEventListener('painel:route', (e) => {
+    if (e.detail.name !== 'linha') return;
+    const line = new URLSearchParams(e.detail.query).get('linha');
+    const bus = state.buses.find((b) => b.line === line);
+    if (!bus) { location.replace('#linhas'); return; }
+    renderBus(bus);
+  });
+
+  // ---------- Navegação entre as duas telas ----------
+  function setFilter(f) {
+    state.filter = f;
+    document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.f === f)));
+    renderLines();
+  }
+
+  function route() {
+    const [name, query = ''] = location.hash.slice(1).split('?');
+    const lines = name === 'linhas';
+    viewHome.hidden = lines;
+    viewLines.hidden = !lines;
+    if (lines && new URLSearchParams(query).get('filtro') === 'fav') setFilter('fav');
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+
+  // ---------- Eventos ----------
+  const onHomeSearch = debounce((v) => { state.qHome = v; renderHome(); });
+  const onLinesSearch = debounce((v) => { state.qLines = v; renderLines(); });
+  $('#q-home').addEventListener('input', (e) => onHomeSearch(e.target.value));
+  $('#q-lines').addEventListener('input', (e) => onLinesSearch(e.target.value));
+  $('#q-home').addEventListener('keydown', (e) => {
+    const q = e.target.value.trim();
+    if (e.key === 'Enter' && q) window.location.href = `#mapa?q=${encodeURIComponent(q)}`;
+  });
+
+  $('#chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    setFilter(chip.dataset.f);
+  });
+
+  $('#logout-btn').addEventListener('click', () => Auth.logout());
+
+  // ---------- Init ----------
+  window.addEventListener('painel:route', renderGreeting);
+  renderGreeting();
+  renderHome();
+  renderLines();
+  route();
+  setInterval(tick, TICK_MS);
+})();
+
+    </script>
+    <script>
+'use strict';
+
+/**
+ * Empty-Bus - tela do mapa
+ * Usa Leaflet + OpenStreetMap.
+ *  - Mapa interativo centrado no Recife
+ *  - Paradas (mock) com popup e botão de favoritar
+ *  - Favoritos persistidos em localStorage
+ *  - Geolocalização do usuário
+ *  - Alternância de camada (ruas / satélite)
+ *  - Busca por parada ou linha (também via ?q= e ?linha=)
+ *  - Bottom sheet com listas
+ *
+ * As coordenadas são aproximadas e servem de exemplo: troque STOPS por dados da sua API.
+ */
+(() => {
+  // ---------- Dados (mock) ----------
+  const STOPS = [
+    { id: 'ti-joana-bezerra', name: 'Terminal Integrado Joana Bezerra', lat: -8.0716, lng: -34.8894, lines: ['307'] },
+    { id: 'terminal-central', name: 'Terminal Central', lat: -8.0631, lng: -34.8808, lines: ['201'] },
+    { id: 'boa-vista', name: 'Boa Vista', lat: -8.0589, lng: -34.8896, lines: ['412'] },
+    { id: 'derby', name: 'Praça do Derby', lat: -8.0536, lng: -34.8995, lines: ['518', '201'] },
+    { id: 'marco-zero', name: 'Marco Zero', lat: -8.0630, lng: -34.8711, lines: ['201', '307'] },
+    { id: 'boa-viagem', name: 'Boa Viagem', lat: -8.1190, lng: -34.9000, lines: ['623'] },
+  ];
+  const RECIFE = [-8.0476, -34.877];
+  const FAV_KEY = 'painel:favoritos';
+
+  // ---------- Utilitários ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const normalize = (s) =>
+    String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  const el = (tag, className, text) => {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+
+  const storage = {
+    read() {
+      try {
+        return new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []);
+      } catch {
+        return new Set();
+      }
+    },
+    write(set) {
+      try {
+        localStorage.setItem(FAV_KEY, JSON.stringify([...set]));
+      } catch {
+        /* storage indisponível: segue sem persistir */
+      }
+    },
+  };
+
+  const favorites = storage.read();
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(message) {
+    let t = $('#toast');
+    if (!t) {
+      t = el('div');
+      t.id = 'toast';
+      t.setAttribute('role', 'status');
+      t.style.cssText =
+        'position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#222;color:#fff;' +
+        'padding:10px 16px;border-radius:20px;font-size:14px;z-index:2000;max-width:90%;text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = message;
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (t.style.display = 'none'), 3000);
+  }
+
+  // ---------- Elementos ----------
+  const mapEl = $('.map-placeholder');
+  const searchInput = $('.floating-search-bar input');
+  const clearBtn = $('.clear-btn');
+  const [locateBtn, layerBtn] = document.querySelectorAll('.control-btn');
+  const [favBtn, stopsBtn] = document.querySelectorAll('.sheet-button');
+  const sheet = $('.bottom-sheet');
+  const handle = $('.drag-handle');
+
+  if (typeof L === 'undefined') {
+    toast('Não foi possível carregar o mapa. Verifique sua conexão.');
+    return;
+  }
+
+  // Garante que o mapa tenha dimensão e que a UI flutue acima das camadas do Leaflet
+  mapEl.id = 'map';
+  mapEl.style.position = 'absolute';
+  mapEl.style.inset = '0';
+  [$('.floating-search-bar'), $('.floating-controls'), sheet].forEach((n) => {
+    if (n) n.style.zIndex = 1000;
+  });
+
+  // ---------- Mapa ----------
+  const map = L.map(mapEl, { zoomControl: false }).setView(RECIFE, 13);
+
+  const baseLayers = {
+    ruas: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap',
+    }),
+    satelite: L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
+    ),
+  };
+  let currentBase = 'ruas';
+  baseLayers[currentBase].addTo(map);
+
+  const stopsLayer = L.layerGroup().addTo(map);
+  const markers = new Map(); // id -> marker
+
+  const stopIcon = (isFav) =>
+    L.divIcon({
+      className: 'stop-marker',
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:${isFav ? '#f1c40f' : '#1e6fff'};
+        color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;
+        box-shadow:0 2px 6px rgba(0,0,0,.35);font-size:14px;"><i class="fa-solid fa-bus"></i></div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -14],
+    });
+
+  function buildPopup(stop) {
+    const box = el('div');
+    box.append(el('strong', '', stop.name), el('br'));
+    box.append(el('span', '', `Linhas: ${stop.lines.join(', ')}`), el('br'));
+
+    const btn = el('button', '', favorites.has(stop.id) ? '★ Remover dos favoritos' : '☆ Favoritar');
+    btn.style.cssText = 'margin-top:8px;padding:6px 10px;border:0;border-radius:8px;background:#1e6fff;color:#fff;cursor:pointer;';
+    btn.addEventListener('click', () => {
+      toggleFavorite(stop.id);
+      btn.textContent = favorites.has(stop.id) ? '★ Remover dos favoritos' : '☆ Favoritar';
+    });
+    box.appendChild(btn);
+    return box;
+  }
+
+  STOPS.forEach((stop) => {
+    const m = L.marker([stop.lat, stop.lng], {
+      icon: stopIcon(favorites.has(stop.id)),
+      title: stop.name,
+      keyboard: true,
+    }).bindPopup(() => buildPopup(stop));
+    markers.set(stop.id, m);
+    m.addTo(stopsLayer);
+  });
+
+  // ---------- Favoritos ----------
+  function toggleFavorite(id) {
+    const wasFav = favorites.has(id);
+    wasFav ? favorites.delete(id) : favorites.add(id);
+    storage.write(favorites);
+    markers.get(id)?.setIcon(stopIcon(!wasFav));
+    toast(wasFav ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+    if (panelMode) renderPanel();
+  }
+
+  // ---------- Painel inferior ----------
+  const panel = el('div', 'sheet-list');
+  panel.hidden = true;
+  panel.style.cssText = 'max-height:40vh;overflow-y:auto;margin-top:12px;';
+  sheet.appendChild(panel);
+  let panelMode = null; // 'favoritos' | 'paradas' | null
+
+  function focusStop(stop) {
+    map.flyTo([stop.lat, stop.lng], 16, { duration: 0.8 });
+    markers.get(stop.id)?.openPopup();
+  }
+
+  function renderPanel() {
+    const items =
+      panelMode === 'favoritos' ? STOPS.filter((s) => favorites.has(s.id)) : STOPS;
+
+    panel.replaceChildren();
+
+    if (!items.length) {
+      const p = el('p', '', 'Você ainda não tem favoritos. Toque em uma parada no mapa para favoritar.');
+      p.style.cssText = 'text-align:center;color:#fff;opacity:.85;padding:12px;';
+      panel.appendChild(p);
+      return;
+    }
+
+    items.forEach((stop) => {
+      const row = el('button', 'sheet-row');
+      row.type = 'button';
+      row.style.cssText =
+        'display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px;' +
+        'background:none;border:0;border-bottom:1px solid rgba(255,255,255,.25);text-align:left;cursor:pointer;font:inherit;color:#fff;';
+      const info = el('span');
+      info.append(el('strong', '', stop.name), el('br'), el('small', '', `Linhas: ${stop.lines.join(', ')}`));
+      row.append(info, el('span', '', favorites.has(stop.id) ? '★' : ''));
+      row.addEventListener('click', () => focusStop(stop));
+      panel.appendChild(row);
+    });
+  }
+
+  function setPanel(mode) {
+    panelMode = panelMode === mode ? null : mode;
+    panel.hidden = panelMode === null;
+    favBtn.classList.toggle('active', panelMode === 'favoritos');
+    stopsBtn.classList.toggle('active', panelMode === 'paradas');
+    if (panelMode) renderPanel();
+  }
+
+  favBtn.addEventListener('click', () => setPanel('favoritos'));
+  stopsBtn.addEventListener('click', () => setPanel('paradas'));
+  handle.style.cursor = 'pointer';
+  handle.addEventListener('click', () => {
+    panelMode = null;
+    panel.hidden = true;
+    favBtn.classList.remove('active');
+    stopsBtn.classList.remove('active');
+  });
+
+  // ---------- Controles flutuantes ----------
+  let userMarker;
+  locateBtn.addEventListener('click', () => {
+    let locationOff = false;
+    try { locationOff = localStorage.getItem('painel:localizacao') === '0'; } catch { /* segue */ }
+    if (locationOff) return toast('Localização desativada em Configurações.');
+    if (!navigator.geolocation) return toast('Geolocalização não suportada neste navegador.');
+    toast('Buscando sua localização...');
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const pos = [coords.latitude, coords.longitude];
+        userMarker?.remove();
+        userMarker = L.circleMarker(pos, {
+          radius: 8, color: '#fff', weight: 3, fillColor: '#1e6fff', fillOpacity: 1,
+        }).addTo(map);
+        map.flyTo(pos, 16);
+      },
+      (err) =>
+        toast(err.code === err.PERMISSION_DENIED
+          ? 'Permissão de localização negada.'
+          : 'Não foi possível obter sua localização.'),
+      { enableHighAccuracy: true, timeout: 10_000 }
+    );
+  });
+
+  layerBtn.addEventListener('click', () => {
+    map.removeLayer(baseLayers[currentBase]);
+    currentBase = currentBase === 'ruas' ? 'satelite' : 'ruas';
+    baseLayers[currentBase].addTo(map).bringToBack();
+    toast(currentBase === 'ruas' ? 'Camada: ruas' : 'Camada: satélite');
+  });
+
+  // ---------- Busca ----------
+  function search(query) {
+    const q = normalize(query);
+    if (!q) return resetView();
+
+    const found = STOPS.filter(
+      (s) => normalize(s.name).includes(q) || s.lines.some((l) => normalize(l).includes(q))
+    );
+
+    if (!found.length) return toast('Nenhuma parada ou linha encontrada.');
+
+    stopsLayer.clearLayers();
+    found.forEach((s) => markers.get(s.id).addTo(stopsLayer));
+
+    if (found.length === 1) focusStop(found[0]);
+    else map.flyToBounds(L.latLngBounds(found.map((s) => [s.lat, s.lng])), { padding: [60, 60] });
+  }
+
+  function resetView() {
+    stopsLayer.clearLayers();
+    markers.forEach((m) => m.addTo(stopsLayer));
+  }
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') search(searchInput.value);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    resetView();
+    searchInput.focus();
+  });
+
+  // ---------- Entrada na tela (#mapa?q= / #mapa?linha=) ----------
+  window.addEventListener('painel:route', (e) => {
+    if (e.detail.name !== 'mapa') return;
+    setTimeout(() => map.invalidateSize(), 0); // o mapa nasce escondido: recalcula o tamanho
+    const params = new URLSearchParams(e.detail.query);
+
+    // Vindo da tela da linha: o botão voltar retorna a ela e o mapa centraliza na parada
+    const backBtn = $('.back-btn');
+    const fromLine = params.get('linha');
+    const stop = STOPS.find((s) => s.id === params.get('parada'));
+    backBtn.setAttribute('href', stop && fromLine ? `#linha?linha=${encodeURIComponent(fromLine)}` : '#inicio');
+    if (stop) {
+      resetView();
+      searchInput.value = stop.name;
+      setTimeout(() => {
+        map.invalidateSize();
+        map.setView([stop.lat, stop.lng], 17, { animate: false });
+        markers.get(stop.id)?.openPopup();
+      }, 30);
+      return;
+    }
+
+    const initial = params.get('linha') || params.get('q') || '';
+    searchInput.value = initial;
+    initial ? search(initial) : resetView();
+  });
+})();
+
+    </script>
+    <script>
+'use strict';
+
+/** Empty-Bus - telas Configurações (#config) e Perfil (#perfil) */
+(() => {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const THEME_KEY = 'painel:tema';
+  const LOC_KEY = 'painel:localizacao';
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  };
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(message) {
+    let t = $('#cf-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'cf-toast';
+      t.setAttribute('role', 'status');
+      t.style.cssText =
+        'position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:#222;color:#fff;' +
+        'padding:10px 16px;border-radius:20px;font-size:14px;z-index:3000;max-width:90%;text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = message;
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (t.style.display = 'none'), 2800);
+  }
+
+  document.querySelectorAll('[data-toast]').forEach((btn) =>
+    btn.addEventListener('click', () => toast(btn.dataset.toast)));
+
+  // ---------- Modo escuro e Localização ----------
+  const dark = $('#cf-dark');
+  const loc = $('#cf-loc');
+  const applyTheme = (on) => { document.documentElement.dataset.tema = on ? 'escuro' : 'claro'; };
+
+  const syncSwitches = () => {
+    dark.checked = store.get(THEME_KEY) === 'escuro';
+    loc.checked = store.get(LOC_KEY) !== '0';
+  };
+  syncSwitches();
+  applyTheme(dark.checked);
+
+  dark.addEventListener('change', () => {
+    applyTheme(dark.checked);
+    store.set(THEME_KEY, dark.checked ? 'escuro' : 'claro');
+  });
+  loc.addEventListener('change', () => {
+    store.set(LOC_KEY, loc.checked ? '1' : '0');
+    toast(loc.checked ? 'Localização ativada' : 'Localização desativada');
+  });
+
+  // ---------- Perfil ----------
+  const profileKey = (u) => `painel:perfil:${u.id}`;
+  const readProfile = (u) => {
+    try { return JSON.parse(localStorage.getItem(profileKey(u))) || {}; } catch { return {}; }
+  };
+  const writeProfile = (u, p) => store.set(profileKey(u), JSON.stringify(p));
+
+  const form = $('#perfil-form');
+  const view = $('#perfil-view');
+  const errBox = $('#pf-err');
+
+  function renderProfile() {
+    const user = Auth.currentUser();
+    if (!user) return;
+    const p = readProfile(user);
+    $('#perfil-nome').textContent = user.name;
+    $('#perfil-email').textContent = user.email;
+    $('#pv-name').textContent = user.name;
+    $('#pv-email').textContent = user.email;
+    $('#pv-phone').textContent = p.phone || 'Adicionar telefone';
+    $('#pv-address').textContent = p.address || 'Defina um endereço padrão';
+
+    const img = $('#perfil-img');
+    if (p.photo) img.src = p.photo;
+    img.toggleAttribute('hidden', !p.photo);
+    $('#perfil-icon').toggleAttribute('hidden', !!p.photo);
+  }
+
+  function setEditing(on, focusSel = '#pf-name') {
+    view.hidden = on;
+    form.hidden = !on;
+    errBox.textContent = '';
+    if (!on) return;
+    const user = Auth.currentUser();
+    if (!user) return;
+    const p = readProfile(user);
+    $('#pf-name').value = user.name;
+    $('#pf-email').value = user.email;
+    $('#pf-phone').value = p.phone || '';
+    $('#pf-address').value = p.address || '';
+    $(focusSel).focus();
+  }
+
+  view.querySelectorAll('[data-edit]').forEach((btn) =>
+    btn.addEventListener('click', () => setEditing(true, `#pf-${btn.dataset.edit}`)));
+  $('#perfil-edit').addEventListener('click', () => setEditing(true));
+  $('#pf-cancel').addEventListener('click', () => setEditing(false));
+  $('#perfil-bell').addEventListener('click', () => toast('Você não tem novas notificações'));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const user = Auth.currentUser();
+    if (!user) return;
+    const fail = (msg, sel) => { errBox.textContent = msg; if (sel) $(sel).focus(); };
+
+    const name = $('#pf-name').value.trim();
+    const phone = $('#pf-phone').value.trim();
+    const address = $('#pf-address').value.trim();
+    const digits = phone.replace(/\D/g, '');
+
+    if (name.length < 2) return fail('Informe seu nome (mínimo 2 letras).', '#pf-name');
+    if (phone && (digits.length < 10 || digits.length > 11)) return fail('Telefone inválido. Use DDD + número.', '#pf-phone');
+
+    const result = Auth.updateName(name);
+    if (!result.ok) return fail(result.error, '#pf-name');
+    if (!writeProfile(user, { ...readProfile(user), phone, address }))
+      return fail('Não foi possível salvar neste navegador.');
+
+    renderProfile();
+    setEditing(false);
+    toast('Perfil atualizado');
+  });
+
+  // ---------- Foto (reduzida para 256x256 e guardada no navegador) ----------
+  $('#perfil-foto').addEventListener('click', () => $('#perfil-file').click());
+  $('#perfil-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const SIZE = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = SIZE;
+      const side = Math.min(img.width, img.height);
+      canvas.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, SIZE, SIZE);
+
+      const user = Auth.currentUser();
+      if (!user) return;
+      const p = readProfile(user);
+      p.photo = canvas.toDataURL('image/jpeg', 0.85);
+      if (writeProfile(user, p)) { renderProfile(); toast('Foto atualizada'); }
+      else toast('Não foi possível salvar a foto.');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('Não foi possível ler a imagem.'); };
+    img.src = url;
+  });
+
+  // ---------- Entrada nas telas ----------
+  let prev = '';
+  const routeName = (url) => (url.includes('#') ? url.split('#')[1].split('?')[0] : '');
+  window.addEventListener('hashchange', (e) => { prev = routeName(e.oldURL); });
+
+  window.addEventListener('painel:route', (e) => {
+    if (e.detail.name === 'config') syncSwitches();
+    if (e.detail.name === 'perfil') {
+      $('#perfil-back').setAttribute('href', prev === 'config' ? '#config' : '#inicio');
+      renderProfile();
+      setEditing(false);
+    }
+  });
+})();
+
+    </script>
+    <script>
+'use strict';
+
+/** Empty-Bus - navegação entre as telas (#login, #inicio, #linhas, #linha, #mapa, #config, #perfil) */
+(() => {
+  const screens = {
+    login: document.getElementById('screen-login'),
+    app: document.getElementById('screen-app'),
+    map: document.getElementById('screen-map'),
+    bus: document.getElementById('screen-bus'),
+    config: document.getElementById('screen-config'),
+    perfil: document.getElementById('screen-perfil'),
+  };
+
+  function route() {
+    const [name, query = ''] = location.hash.slice(1).split('?');
+    const user = Auth.currentUser();
+
+    if (!user && name !== 'login') return location.replace('#login');
+    if (user && !['inicio', 'linhas', 'linha', 'mapa', 'config', 'perfil'].includes(name)) return location.replace('#inicio');
+
+    const current = { login: 'login', mapa: 'map', linha: 'bus', config: 'config', perfil: 'perfil' }[name] || 'app';
+    Object.entries(screens).forEach(([key, node]) => (node.hidden = key !== current));
+    document.title = { login: 'Entrar - Empty-Bus', mapa: 'Mapa de Linhas', linha: 'Linha - Empty-Bus', config: 'Configurações - Empty-Bus', perfil: 'Perfil - Empty-Bus' }[name] || 'Empty-Bus';
+    window.dispatchEvent(new CustomEvent('painel:route', { detail: { name, query } }));
+  }
+
+  window.addEventListener('hashchange', route);
+  route();
+})();
+
+    </script>
+</body>
+</html>
